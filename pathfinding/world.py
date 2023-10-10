@@ -2,22 +2,21 @@ import sys
 import subprocess
 import time
 
-DELAY = 1
+DELAY = 0.1
 
 PLAYER='P'
 GOAL='G'
 WALL='#'
 BLANK=' '
 
+Position = (int, int)
+
 VELOCITY = [
     UP := (-1,0),
     DOWN := (1,0),
-    RIGHT := (-1,0),
-    LEFT := (0,1),
+    RIGHT := (0,1),
+    LEFT := (0,-1),
 ]
-
-Position = (int, int)
-ADJS = [(0,-1), (0,1), (1,0), (-1,0)]
 
 CONSOLE_START_X = 10
 CONSOLE_START_Y = int(CONSOLE_START_X / 2)
@@ -40,7 +39,7 @@ class World:
     
     def player_sensor(self):
         player_x, player_y = self.player
-        return "".join(self.at(x + player_x, y + player_y) for x, y in ADJS)
+        return "".join(self.at(x + player_x, y + player_y) for x, y in VELOCITY)
     
     def apply(self, velocity):
         player_x, player_y = self.player[0] + velocity[0], self.player[1] + velocity[1]
