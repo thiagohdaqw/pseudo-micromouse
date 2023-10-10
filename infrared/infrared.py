@@ -9,8 +9,10 @@ DELAY = float(os.getenv("DELAY", 0.5))
 gpio.setmode(gpio.BCM)
 gpio.setup(INFRARED_PIN, gpio.IN)
 
-
-while True:
-    time.sleep(DELAY)
-    value = gpio.input(INFRARED_PIN)
-    print("Infrared:", "HIGHT" if value == gpio.HIGH else "LOW")
+try:
+    while True:
+        time.sleep(DELAY)
+        value = gpio.input(INFRARED_PIN)
+        print("Infrared:", "HIGHT" if value == gpio.HIGH else "LOW")
+finally:
+    gpio.cleanup()
