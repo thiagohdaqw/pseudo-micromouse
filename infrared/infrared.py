@@ -2,7 +2,7 @@ import RPi.GPIO as gpio
 import time
 import os
 
-INFRARED_PIN = int(os.getenv("INFRARED_PIN", 14))
+INFRARED_PIN = int(os.getenv("INFRARED_PIN", 17))
 DELAY = float(os.getenv("DELAY", 0.5))
 
 

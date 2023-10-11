@@ -2,7 +2,7 @@ import sys
 import subprocess
 import time
 
-DELAY = 0.1
+DELAY = 0.25
 
 PLAYER='P'
 GOAL='G'
