@@ -8,6 +8,7 @@
 #include <cerrno>
 
 #include "motor.hpp"
+#include "infrared.hpp"
 
 #define DELAY 0.01 * 10e6
 
@@ -16,8 +17,14 @@ Motor motors[2] = {
     {23, 22, 21}
 };
 
+#define INFRARED_SIZE 3
+int infrareds[INFRARED_SIZE] = {
+    0, 2, 3
+};
+
 
 void gpio_init();
+void gpio_cleanup(int _signum);
 
 int main() {
     gpio_init();
@@ -40,6 +47,7 @@ void gpio_init() {
 
     motor_setup(motors[0]);
     motor_setup(motors[1]);
+    infrared_setup(infrareds, INFRARED_SIZE);
 
     signal(SIGINT, gpio_cleanup);
 }
