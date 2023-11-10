@@ -1,7 +1,8 @@
 #ifndef __SENDPATHBOT_H_INCLUDED__
 #define __SENDPATHBOT_H_INCLUDED__
 
-void send_video_telegram(char *argv[]);
+void video_send_telegram(char *token, char *chat_id, char *video_path);
+void video_make_from_images(char *output_path);
 
 #endif  //__SENDPATHBOT_H_INCLUDED__
 
@@ -12,34 +13,29 @@ void send_video_telegram(char *argv[]);
 #include <stdlib.h>
 #include <string.h>
 
-char *video_name = "assets/output.mp4";
 
-void make_video_images(){
+void video_make_from_images(char *output_path){
     char command[1024] = {0};
 
     snprintf(command, 1024, 
         "ffmpeg -y -framerate 1 -i assets/imagesPath/image%%d.png -c:v libx264 -r 30 %s",
-        video_name
+        output_path
     );
 
     printf("Gerando o video com as imagens %s\n", command);
 
     system(command);
 
-    system("rm assets/imagesPath/*");
+    // system("rm assets/imagesPath/*");
 }
 
-void send_video_telegram(char *argv[]) {
-    char *token = argv[0];
-    char *chat_id = argv[1];
+void video_send_telegram(char *chat_id, char *token, char *video_path) {
     char request[1024] = {0};
-
-    make_video_images();
 
     printf("Enviando mensagem\n");
 
     snprintf(request, 1024, "curl -X POST -F 'video=@%s' 'https://api.telegram.org/bot%s/sendVideo?chat_id=%s'",
-        video_name,
+        video_path,
         token,
         chat_id
     );

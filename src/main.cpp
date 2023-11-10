@@ -9,6 +9,7 @@
 
 #include "motor.hpp"
 #include "infrared.hpp"
+#include "video.hpp"
 
 #define DELAY 0.01 * 10e6
 
@@ -26,8 +27,38 @@ int infrareds[INFRARED_SIZE] = {
 void gpio_init();
 void gpio_cleanup(int _signum);
 
-int main() {
+int main(int argc, char **argv) {
+
+    if (argc == 1) {
+        printf("Usage: %s <subcommand>\n", argv[0]);
+        printf("  subcommands:\n"
+                "   motor\n"
+                "   infrared\n"
+                "   goal\n"
+                "   video CHAT_ID TOKEN OUTPUT_VIDEO_PATH\n"
+        );
+        return 1;
+    }
+
     gpio_init();
+
+    if (strcmp(argv[1], "motor") == 0) {
+        printf("Testando os motores\n");
+        motor_test(motors);
+    }
+    if (strcmp(argv[1], "infrared") == 0) {
+        printf("Testando os infra vermelhos\n");
+        infrared_test(infrareds, INFRARED_SIZE);
+    }
+    if (strcmp(argv[1], "goal") == 0) {
+        printf("Testando os identificador de objetivo\n");
+    }
+    if (strcmp(argv[1], "video") == 0) {
+        assert(argc == 5 && "Usage: ./main CHAT_ID TOKEN OUTPUT_VIDEO_PATH");
+        printf("Testando o video\n");
+        video_make_from_images(argv[4]);
+        video_send_telegram(argv[2], argv[3], argv[4]);
+    }
 
     gpio_cleanup(0);
     return 0;

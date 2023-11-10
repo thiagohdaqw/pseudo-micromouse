@@ -12,18 +12,18 @@ enum MotorDirection {
     RIGHT,
 };
 
-typedef struct motor
-{
+typedef struct motor {
     int pin;
     int pin_in_a;
     int pin_in_b;
 } Motor;
 
-
 void motor_setup(Motor motor);
 void motor_cleanup(Motor motor);
 void motor_set_pwm_percentage(int percentage);
 void motor_move(Motor motors[2], MotorDirection direction);
+
+void motor_test(Motor motors[2]);
 
 #endif  // __MOTOR_H_INCLUDED__
 
@@ -31,9 +31,10 @@ void motor_move(Motor motors[2], MotorDirection direction);
 #define __MOTOR_IMPLEMANTATION__
 
 #include <wiringPi.h>
+#include <unistd.h>
+#include <stdio.h>
 
 int pwm_percentage = 100;
-
 
 void motor_setup(Motor motor) {
     pinMode(motor.pin, PWM_OUTPUT);
@@ -54,7 +55,7 @@ void motor_set_pwm_percentage(int value) {
 }
 
 void motor_pwm_write(Motor motor, int percentage) {
-    pwmWrite(motor.pin, PWM_MAX_VALUE * ((float)percentage/100));
+    pwmWrite(motor.pin, PWM_MAX_VALUE * ((float)percentage / 100));
 }
 
 void motor_set_direction(Motor motor, MotorDirection direction) {
@@ -87,6 +88,30 @@ void motor_move(Motor motors[2], MotorDirection direction) {
     } else {
         motor_set_direction(motors[0], direction);
         motor_set_direction(motors[1], direction);
+    }
+}
+
+void motor_test(Motor motors[2]) {
+    while (true) {
+        printf("Parando\n");
+        motor_move(motors, STOP);
+        sleep(5);
+
+        printf("Frente\n");
+        motor_move(motors, FRONT);
+        sleep(5);
+
+        printf("Direita\n");
+        motor_move(motors, RIGHT);
+        sleep(5);
+
+        printf("Baixo\n");
+        motor_move(motors, BACK);
+        sleep(5);
+
+        printf("Esquerda\n");
+        motor_move(motors, LEFT);
+        sleep(5);
     }
 }
 

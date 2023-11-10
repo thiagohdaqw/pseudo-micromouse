@@ -1,4 +1,4 @@
 #!/bin/bash
 
 
-g++ src/* -o main -lm -pthread -lwiringPi
+g++ src/*.*pp -o main -lm -pthread -lwiringPi
