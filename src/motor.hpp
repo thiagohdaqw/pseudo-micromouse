@@ -4,13 +4,7 @@
 #define PWM_MIN 35
 #define PWM_MAX_VALUE 1024
 
-enum MotorDirection {
-    STOP,
-    BACK,
-    FRONT,
-    LEFT,
-    RIGHT,
-};
+#include "types.hpp"
 
 typedef struct motor
 {
@@ -23,7 +17,7 @@ typedef struct motor
 void motor_setup(Motor motor);
 void motor_cleanup(Motor motor);
 void motor_set_pwm_percentage(int percentage);
-void motor_move(Motor motors[2], MotorDirection direction);
+void motor_move(Motor motors[2], Action action);
 
 #endif  // __MOTOR_H_INCLUDED__
 
@@ -57,8 +51,8 @@ void motor_pwm_write(Motor motor, int percentage) {
     pwmWrite(motor.pin, PWM_MAX_VALUE * ((float)percentage/100));
 }
 
-void motor_set_direction(Motor motor, MotorDirection direction) {
-    switch (direction) {
+void motor_set_direction(Motor motor, Action action) {
+    switch (action) {
         case STOP:
             digitalWrite(motor.pin_in_a, LOW);
             digitalWrite(motor.pin_in_b, LOW);
@@ -74,19 +68,19 @@ void motor_set_direction(Motor motor, MotorDirection direction) {
     }
 }
 
-void motor_move(Motor motors[2], MotorDirection direction) {
-    motor_pwm_write(motors[0], (direction != STOP) * pwm_percentage);
-    motor_pwm_write(motors[1], (direction != STOP) * pwm_percentage);
+void motor_move(Motor motors[2], Action action) {
+    motor_pwm_write(motors[0], (action != STOP) * pwm_percentage);
+    motor_pwm_write(motors[1], (action != STOP) * pwm_percentage);
 
-    if (direction == RIGHT) {
+    if (action == RIGHT) {
         motor_set_direction(motors[0], FRONT);
         motor_set_direction(motors[1], BACK);
-    } else if (direction == LEFT) {
+    } else if (action == LEFT) {
         motor_set_direction(motors[0], BACK);
         motor_set_direction(motors[1], FRONT);
     } else {
-        motor_set_direction(motors[0], direction);
-        motor_set_direction(motors[1], direction);
+        motor_set_direction(motors[0], action);
+        motor_set_direction(motors[1], action);
     }
 }
 

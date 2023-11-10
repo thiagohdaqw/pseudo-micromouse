@@ -6,9 +6,11 @@
 #include <unistd.h>
 #include <wiringPi.h>
 #include <cerrno>
+#include <queue>
 
 #include "motor.hpp"
 #include "infrared.hpp"
+#include "pathfinding.hpp"
 
 #define DELAY 0.01 * 10e6
 
@@ -27,9 +29,17 @@ void gpio_init();
 void gpio_cleanup(int _signum);
 
 int main() {
-    gpio_init();
+    // gpio_init();
 
-    gpio_cleanup(0);
+    PathFinder finder;
+
+    while (!finder.continue_search())
+    {
+
+    }
+    
+
+    // gpio_cleanup(0);
     return 0;
 }
 
