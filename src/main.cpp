@@ -20,9 +20,9 @@ Motor motors[2] = {
 
 #define ULTRASONIC_SIZE 3
 Ultrasonic ultrasonics[ULTRASONIC_SIZE] = {
-    {3, 12},      // Frente
-    {2, 13},      // Direita
-    {0, 14}      // Esquerda
+    {3, 12, 0},      // Frente { echo, trigger, distance}
+    {2, 13, 0},      // Direita
+    {0, 14, 0}      // Esquerda
 };
 
 

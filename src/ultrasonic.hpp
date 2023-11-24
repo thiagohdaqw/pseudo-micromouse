@@ -4,10 +4,14 @@
 #include <wiringPi.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
 
 typedef struct ultrasonic {
     int echo;
     int trigger;
+    unsigned int distance;
+    pthread_t tid;
 } Ultrasonic;
 
 #define TRUE (1==1)
@@ -17,17 +21,7 @@ typedef struct ultrasonic {
 #define PING_TIMEOUT 6000
 #define ROUNDTRIP_M 5800.0f
 #define ROUNDTRIP_CM 58
-
-
-void ultrasonic_init(Ultrasonic *ultrasonic, int size)
-{
-    for (int i = 0; i < size; i++) {
-        pinMode(ultrasonic[i].trigger, OUTPUT);
-        pinMode(ultrasonic[i].echo, INPUT);
-
-        digitalWrite(ultrasonic[i].trigger, LOW);
-    }
-}
+#define ULTRASONIC_WATCH_DELAY 300000 // 0.3s
 
 unsigned int ultrasonic_measure_raw(Ultrasonic ultrasonic)
 {
@@ -55,20 +49,37 @@ unsigned int ultrasonic_measure_raw(Ultrasonic ultrasonic)
     return time - echo_start;
 }
 
-unsigned int ultrasonic_measure_cm(Ultrasonic ultrasonic)
+void ultrasonic_measure_cm(Ultrasonic *ultrasonic)
 {
-    return ultrasonic_measure_raw(ultrasonic) / ROUNDTRIP_CM;
+    ultrasonic->distance = ultrasonic_measure_raw(*ultrasonic) / ROUNDTRIP_CM;
+}
+
+void *ultrasonic_watch(void *args) {
+    Ultrasonic *sensor = (Ultrasonic*) args;
+
+    while (1) {
+        usleep(ULTRASONIC_WATCH_DELAY);
+        ultrasonic_measure_cm(sensor);
+    }
+    return NULL;
 }
 
 void ultrasonic_test(Ultrasonic ultrasonics[3]) {
-    unsigned int d;
     while (1) {
         sleep(1);
-        unsigned int frente_cm = ultrasonic_measure_cm(ultrasonics[0]);
-        unsigned int direita_cm = ultrasonic_measure_cm(ultrasonics[1]);
-        unsigned int esquerda_cm = ultrasonic_measure_cm(ultrasonics[2]);
+        printf("Frente = %dcm, Direita = %dcm, Esquerda = %dcm\n", ultrasonics[0].distance, ultrasonics[1].distance, ultrasonics[2].distance);
+    }
+}
 
-        printf("Frente = %dcm, Direita = %dcm, Esquerda = %dcm\n", frente_cm, direita_cm, esquerda_cm);
+void ultrasonic_init(Ultrasonic *ultrasonic, int size)
+{
+    for (int i = 0; i < size; i++) {
+        pinMode(ultrasonic[i].trigger, OUTPUT);
+        pinMode(ultrasonic[i].echo, INPUT);
+
+        digitalWrite(ultrasonic[i].trigger, LOW);
+
+        pthread_create(&ultrasonic[i].tid, NULL, &ultrasonic_watch, (void *)&ultrasonic[i]);
     }
 }
 
