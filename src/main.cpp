@@ -10,25 +10,25 @@
 #include "motor.hpp"
 #include "video.hpp"
 #include "ultrasonic.hpp"
+#include "pathfinding.hpp"
 
 #define DELAY 0.01 * 10e6
 
 Motor motors[2] = {
-    {26, 5, 4},         // Esquerda
-    {23, 21, 22}        // Direita
+    {23, 21, 22, 0},        // Direita
+    {26, 5, 4, 1}          // Esquerda
 };
 
-#define ULTRASONIC_SIZE 3
 Ultrasonic ultrasonics[ULTRASONIC_SIZE] = {
     {3, 12, 0},      // Frente { echo, trigger, distance}
-    {2, 13, 0},      // Direita
-    {0, 14, 0}      // Esquerda
+    {0, 14, 0},      // Esquerda
+    {2, 13, 0}      // Direita
 };
-
 
 
 void gpio_init();
 void gpio_cleanup(int _signum);
+
 
 int main(int argc, char **argv) {
 
@@ -62,6 +62,9 @@ int main(int argc, char **argv) {
     }
     if (strcmp(argv[1], "sonic") == 0) {
         ultrasonic_test(ultrasonics);
+    }
+    if (strcmp(argv[1], "path") == 0) {
+        pathfinding_test(ultrasonics, motors);
     }
 
     gpio_cleanup(0);

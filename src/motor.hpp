@@ -16,6 +16,7 @@ typedef struct motor {
     int pin;
     int pin_in_a;
     int pin_in_b;
+    int pwm_inc;
 } Motor;
 
 void motor_setup(Motor motor);
@@ -79,8 +80,8 @@ void motor_set_direction(Motor motor, MotorDirection direction) {
 }
 
 void motor_move(Motor motors[2], MotorDirection direction) {
-    motor_pwm_write(motors[0], (direction != STOP) * pwm_percentage);
-    motor_pwm_write(motors[1], (direction != STOP) * pwm_percentage);
+    motor_pwm_write(motors[0], (direction != STOP) * (pwm_percentage + motors[0].pwm_inc));
+    motor_pwm_write(motors[1], (direction != STOP) * (pwm_percentage + motors[1].pwm_inc));
 
     if (direction == RIGHT) {
         motor_set_direction(motors[0], FRONT);

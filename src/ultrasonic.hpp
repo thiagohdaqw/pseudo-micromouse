@@ -16,12 +16,17 @@ typedef struct ultrasonic {
 
 #define TRUE (1==1)
 
+#define ULTRASONIC_SIZE  3
+#define ULTRASONIC_FRONT 0
+#define ULTRASONIC_RIGHT 1
+#define ULTRASONIC_LEFT  2
+
 #define TRIGGER_LOW_DELAY 4
 #define TRIGGER_HIGH_DELAY 10
 #define PING_TIMEOUT 6000
 #define ROUNDTRIP_M 5800.0f
 #define ROUNDTRIP_CM 58
-#define ULTRASONIC_WATCH_DELAY 300000 // 0.3s
+#define ULTRASONIC_WATCH_DELAY 1e5 // 0.3s
 
 unsigned int ultrasonic_measure_raw(Ultrasonic ultrasonic)
 {
@@ -64,7 +69,7 @@ void *ultrasonic_watch(void *args) {
     return NULL;
 }
 
-void ultrasonic_test(Ultrasonic ultrasonics[3]) {
+void ultrasonic_test(Ultrasonic ultrasonics[ULTRASONIC_SIZE]) {
     while (1) {
         sleep(1);
         printf("Frente = %dcm, Direita = %dcm, Esquerda = %dcm\n", ultrasonics[0].distance, ultrasonics[1].distance, ultrasonics[2].distance);
