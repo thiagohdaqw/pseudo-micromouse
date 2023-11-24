@@ -8,20 +8,23 @@
 #include <cerrno>
 
 #include "motor.hpp"
-#include "infrared.hpp"
 #include "video.hpp"
+#include "ultrasonic.hpp"
 
 #define DELAY 0.01 * 10e6
 
 Motor motors[2] = {
-    {26, 5, 4},
-    {23, 22, 21}
+    {26, 5, 4},         // Esquerda
+    {23, 21, 22}        // Direita
 };
 
-#define INFRARED_SIZE 3
-int infrareds[INFRARED_SIZE] = {
-    0, 2, 3
+#define ULTRASONIC_SIZE 3
+Ultrasonic ultrasonics[ULTRASONIC_SIZE] = {
+    {3, 12},      // Frente
+    {2, 13},      // Direita
+    {0, 14}      // Esquerda
 };
+
 
 
 void gpio_init();
@@ -33,7 +36,7 @@ int main(int argc, char **argv) {
         printf("Usage: %s <subcommand>\n", argv[0]);
         printf("  subcommands:\n"
                 "   motor\n"
-                "   infrared\n"
+                "   sonic\n"
                 "   goal\n"
                 "   video CHAT_ID TOKEN OUTPUT_VIDEO_PATH\n"
         );
@@ -43,12 +46,10 @@ int main(int argc, char **argv) {
     gpio_init();
 
     if (strcmp(argv[1], "motor") == 0) {
-        printf("Testando os motores\n");
-        motor_test(motors);
-    }
-    if (strcmp(argv[1], "infrared") == 0) {
-        printf("Testando os infra vermelhos\n");
-        infrared_test(infrareds, INFRARED_SIZE);
+	assert(argc == 3 && "Usage: ./main motor ACTION_DELAY_SECS");
+	float delay_secs = atof(argv[2]);
+        printf("Testando os motores. Delay = %.2f\n", delay_secs);
+        motor_test(motors, delay_secs);
     }
     if (strcmp(argv[1], "goal") == 0) {
         printf("Testando os identificador de objetivo\n");
@@ -58,6 +59,9 @@ int main(int argc, char **argv) {
         printf("Testando o video\n");
         video_make_from_images(argv[4]);
         video_send_telegram(argv[2], argv[3], argv[4]);
+    }
+    if (strcmp(argv[1], "sonic") == 0) {
+        ultrasonic_test(ultrasonics);
     }
 
     gpio_cleanup(0);
@@ -78,7 +82,6 @@ void gpio_init() {
 
     motor_setup(motors[0]);
     motor_setup(motors[1]);
-    infrared_setup(infrareds, INFRARED_SIZE);
-
+    ultrasonic_init(ultrasonics, ULTRASONIC_SIZE);
     signal(SIGINT, gpio_cleanup);
 }

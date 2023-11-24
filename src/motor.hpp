@@ -23,7 +23,7 @@ void motor_cleanup(Motor motor);
 void motor_set_pwm_percentage(int percentage);
 void motor_move(Motor motors[2], MotorDirection direction);
 
-void motor_test(Motor motors[2]);
+void motor_test(Motor motors[2], float delay_secs);
 
 #endif  // __MOTOR_H_INCLUDED__
 
@@ -34,7 +34,10 @@ void motor_test(Motor motors[2]);
 #include <unistd.h>
 #include <stdio.h>
 
-int pwm_percentage = 100;
+#include <unistd.h>
+
+int pwm_percentage = 45;
+float delay_secs = 1;
 
 void motor_setup(Motor motor) {
     pinMode(motor.pin, PWM_OUTPUT);
@@ -91,27 +94,28 @@ void motor_move(Motor motors[2], MotorDirection direction) {
     }
 }
 
-void motor_test(Motor motors[2]) {
+void motor_test(Motor motors[2], float delay_secs) {
+    int delay = delay_secs * 1e6;
     while (true) {
         printf("Parando\n");
         motor_move(motors, STOP);
-        sleep(5);
+        usleep(delay);
 
         printf("Frente\n");
         motor_move(motors, FRONT);
-        sleep(5);
+        usleep(delay);
 
         printf("Direita\n");
         motor_move(motors, RIGHT);
-        sleep(5);
+        usleep(delay);
 
         printf("Baixo\n");
         motor_move(motors, BACK);
-        sleep(5);
+        usleep(delay);
 
         printf("Esquerda\n");
         motor_move(motors, LEFT);
-        sleep(5);
+        usleep(delay);
     }
 }
 

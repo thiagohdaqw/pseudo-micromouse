@@ -1,16 +1,14 @@
-#ifndef __ULTRASONIC_H_INCLUDED__
-#define __ULTRASONIC_H_INCLUDED__
-
-#endif  // __ULTRASONIC_H_INCLUDED__
-
 #ifndef __ULTRASONIC_IMPLEMENTATION__
 #define __ULTRASONIC_IMPLEMENTATION__
 
 #include <wiringPi.h>
 #include <unistd.h>
+#include <stdio.h>
 
-#define PIN_ECHO 27
-#define PIN_TRIGGER 5
+typedef struct ultrasonic {
+    int echo;
+    int trigger;
+} Ultrasonic;
 
 #define TRUE (1==1)
 
@@ -21,45 +19,57 @@
 #define ROUNDTRIP_CM 58
 
 
-void ultrasonic_init()
+void ultrasonic_init(Ultrasonic *ultrasonic, int size)
 {
-    pinMode(PIN_TRIGGER, OUTPUT);
-    pinMode(PIN_ECHO, INPUT);
-    
-    digitalWrite(PIN_TRIGGER, LOW);
+    for (int i = 0; i < size; i++) {
+        pinMode(ultrasonic[i].trigger, OUTPUT);
+        pinMode(ultrasonic[i].echo, INPUT);
+
+        digitalWrite(ultrasonic[i].trigger, LOW);
+    }
 }
 
-void ultrasonic_measure_raw(unsigned int max_time_us, unsigned int *time_us)
+unsigned int ultrasonic_measure_raw(Ultrasonic ultrasonic)
 {
     // Ping: Low for 2..4 us, then high 10 us
-    digitalWrite(PIN_TRIGGER, 0);
+    digitalWrite(ultrasonic.trigger, 0);
     usleep(TRIGGER_LOW_DELAY);
-    digitalWrite(PIN_TRIGGER, 1);
+    digitalWrite(ultrasonic.trigger, 1);
     usleep(TRIGGER_HIGH_DELAY);
-    digitalWrite(PIN_TRIGGER, 0);
+    digitalWrite(ultrasonic.trigger, 0);
 
     // Previous ping isn't ended
-    digitalRead(PIN_ECHO);
+    digitalRead(ultrasonic.echo);
 
     // Wait for echo
     long int start = micros();
-    while (!digitalRead(PIN_ECHO))
+    while (!digitalRead(ultrasonic.echo))
     { }
 
     // got echo, measuring
     long int echo_start = micros();
     long int time = echo_start;
-    while (digitalRead(PIN_ECHO));
+    while (digitalRead(ultrasonic.echo));
     time = micros();
 
-    *time_us = time - echo_start;
+    return time - echo_start;
 }
 
-void ultrasonic_measure_cm(unsigned int max_distance, unsigned int *distance)
+unsigned int ultrasonic_measure_cm(Ultrasonic ultrasonic)
 {
-    unsigned int time_us;
-    ultrasonic_measure_raw(max_distance * ROUNDTRIP_CM, &time_us);
-    *distance = time_us / ROUNDTRIP_CM;
+    return ultrasonic_measure_raw(ultrasonic) / ROUNDTRIP_CM;
+}
+
+void ultrasonic_test(Ultrasonic ultrasonics[3]) {
+    unsigned int d;
+    while (1) {
+        sleep(1);
+        unsigned int frente_cm = ultrasonic_measure_cm(ultrasonics[0]);
+        unsigned int direita_cm = ultrasonic_measure_cm(ultrasonics[1]);
+        unsigned int esquerda_cm = ultrasonic_measure_cm(ultrasonics[2]);
+
+        printf("Frente = %dcm, Direita = %dcm, Esquerda = %dcm\n", frente_cm, direita_cm, esquerda_cm);
+    }
 }
 
 #endif  //__ULTRASONIC_IMPLEMENTATION__
