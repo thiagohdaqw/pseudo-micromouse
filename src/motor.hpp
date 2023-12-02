@@ -4,12 +4,16 @@
 #define PWM_MIN 35
 #define PWM_MAX_VALUE 1024
 
+#ifndef ROTATE_DELAY_US
+#define ROTATE_DELAY_US 0.3 * 1e6
+#endif
+
 enum MotorDirection {
     STOP,
-    BACK,
     FRONT,
-    LEFT,
     RIGHT,
+    BACK,
+    LEFT,
 };
 
 typedef struct motor {
@@ -19,10 +23,10 @@ typedef struct motor {
     int pwm_inc;
 } Motor;
 
-void motor_setup(Motor motor);
+void motor_setup(Motor[2] motor);
 void motor_cleanup(Motor motor);
 void motor_set_pwm_percentage(int percentage);
-void motor_move(Motor motors[2], MotorDirection direction);
+void motor_move(MotorDirection direction);
 
 void motor_test(Motor motors[2], float delay_secs);
 
@@ -37,13 +41,18 @@ void motor_test(Motor motors[2], float delay_secs);
 
 #include <unistd.h>
 
-int pwm_percentage = 45;
-float delay_secs = 1;
+static int pwm_percentage = 45;
+static float delay_secs = 1;
 
-void motor_setup(Motor motor) {
-    pinMode(motor.pin, PWM_OUTPUT);
-    pinMode(motor.pin_in_a, OUTPUT);
-    pinMode(motor.pin_in_b, OUTPUT);
+static Motor[2] motors;
+
+void motor_setup(Motor[2] mtrs) {
+    for (int i = 0; i < 2; i++) {
+        pinMode(mtrs[i].pin, PWM_OUTPUT);
+        pinMode(mtrs[i].pin_in_a, OUTPUT);
+        pinMode(mtrs[i].pin_in_b, OUTPUT);
+    }
+    motors = mtrs;
 }
 
 void motor_cleanup(Motor motor) {
@@ -79,7 +88,7 @@ void motor_set_direction(Motor motor, MotorDirection direction) {
     }
 }
 
-void motor_move(Motor motors[2], MotorDirection direction) {
+void motor_move(MotorDirection direction) {
     motor_pwm_write(motors[0], (direction != STOP) * (pwm_percentage + motors[0].pwm_inc));
     motor_pwm_write(motors[1], (direction != STOP) * (pwm_percentage + motors[1].pwm_inc));
 
@@ -95,27 +104,37 @@ void motor_move(Motor motors[2], MotorDirection direction) {
     }
 }
 
+void motor_rotate(MotorDirection direction, MotorDirection target) {
+    while (direction != target)
+    {
+        motor_move(MotorDirection::RIGHT);
+        usleep(ROTATE_DELAY_US);
+        direction = (direction + 1) % 4 + 1;
+    }
+    motor_move(MotorDirection::STOP);
+}
+
 void motor_test(Motor motors[2], float delay_secs) {
     int delay = delay_secs * 1e6;
     while (true) {
         printf("Parando\n");
-        motor_move(motors, STOP);
+        motor_move(STOP);
         usleep(delay);
 
         printf("Frente\n");
-        motor_move(motors, FRONT);
+        motor_move(FRONT);
         usleep(delay);
 
         printf("Direita\n");
-        motor_move(motors, RIGHT);
+        motor_move(RIGHT);
         usleep(delay);
 
         printf("Baixo\n");
-        motor_move(motors, BACK);
+        motor_move(BACK);
         usleep(delay);
 
         printf("Esquerda\n");
-        motor_move(motors, LEFT);
+        motor_move(LEFT);
         usleep(delay);
     }
 }

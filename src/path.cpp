@@ -4,8 +4,15 @@
 #include <array>
 #include <map>
 #include <cmath>
+#include <time.h>
+
+#include "motor.hpp"
 
 using namespace std;
+
+#ifndef FRONT_DELAY_US
+#define FRONT_DELAY_US 0.5 * 1e6
+#endif
 
 typedef pair<int, int> point;
 typedef point direction;
@@ -42,6 +49,7 @@ class PathFinder
     vector<point> to_search;
     map<point, bool> world;
     point current_position = {0, 0};
+    MotorDirection current_direction = MotorDirection::FRONT;
 
 public:
     bool has_next()
@@ -91,28 +99,50 @@ bool PathFinder::find()
     return false;
 }
 
-direction get_direction(point current, point target)
+MotorDirection get_direction(point current, point target)
 {
     if (target.first < current.first)
-        return UP;
+        return MotorDirection::FRONT;
     if (target.first > current.first)
-        return DOWN;
+        return MotorDirection::BACK;
     if (target.second < current.second)
-        return LEFT;
+        return MotorDirection::LEFT;
     if (target.second > current.second)
-        return RIGHT;
-    return NONE;
+        return MotorDirection::RIGHT;
+    return MotorDirection::STOP;
+}
+
+bool try_move(MotorDirection current, MotorDirection target)
+{
+    double elapsed = 0;
+    bool moved = motor_rotate(current, target);
+
+    if (current == target) {
+        return moved;
+    }
+
+    long int start = micros();
+    long int end = micros();
+
+    motor_move(MotorDirection::FRONT);
+
+    while (end - start < FRONT_DELAY_US) // TODO: ADD FRONTAL COLLISION CHECK
+        end = micros();
+    
+    motor_move(MotorDirection::STOP);
+    return true;
 }
 
 point PathFinder::move_to(point target)
 {
-    direction move = get_direction(current_position, target);
+    MotorDirection target_direction = get_direction(current_position, target);
 
-    cout << "Move: " << move << "\n";
+    bool moved = try_move(current_direction, target_direction);
 
-    if (move == NONE)
+    if (move == MotorDirection::STOP || !moved)
         return current_position;
 
+    current_direction = target_direction;
     return target;
 }
 
