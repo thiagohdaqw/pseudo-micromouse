@@ -14,7 +14,7 @@ void pathfinding_test(Ultrasonic ultrasonics[3], Motor motors[2]) {
     MotorDirection direction = MotorDirection::STOP;
 
     sleep(1);
-    motor_set_pwm_percentage(45);
+    motor_set_pwm_percentage(100);
     while (1) {
         if (ultrasonics[ULTRASONIC_FRONT].distance > MIN_DISTANCE_CM) {
             motor_move(motors, MotorDirection::FRONT);

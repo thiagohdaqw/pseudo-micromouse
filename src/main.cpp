@@ -16,8 +16,8 @@
 #define DELAY 0.01 * 10e6
 
 Motor motors[2] = {
-    {23, 21, 22, 0},        // Direita
-    {26, 5, 4, 1}          // Esquerda
+    {23, 21, 22, 3},        // Direita
+    {26, 5, 4, 0}          // Esquerda
 };
 
 Ultrasonic ultrasonics[ULTRASONIC_SIZE] = {
