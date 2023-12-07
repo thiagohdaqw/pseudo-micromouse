@@ -11,6 +11,7 @@
 #include "video.hpp"
 #include "ultrasonic.hpp"
 #include "pathfinding.hpp"
+#include "goal_recognition.hpp"
 
 #define DELAY 0.01 * 10e6
 
@@ -53,6 +54,11 @@ int main(int argc, char **argv) {
     }
     if (strcmp(argv[1], "goal") == 0) {
         printf("Testando os identificador de objetivo\n");
+        goal_recognition();
+        assert(argc == 5 && "Usage: ./main CHAT_ID TOKEN OUTPUT_VIDEO_PATH");
+        printf("Testando o video\n");
+        video_make_from_images(argv[4]);
+        video_send_telegram(argv[2], argv[3], argv[4]);
     }
     if (strcmp(argv[1], "video") == 0) {
         assert(argc == 5 && "Usage: ./main CHAT_ID TOKEN OUTPUT_VIDEO_PATH");
