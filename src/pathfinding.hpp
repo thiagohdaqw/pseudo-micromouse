@@ -1,68 +1,207 @@
-#ifndef __INCLUDE_PATHFINDING__
-#define __INCLUDE_PATHFINDING__
+#ifndef __PATH_H_INCLUDED__
+#define __PATH_H_INCLUDED__
 
 #include <stdio.h>
-#include "ultrasonic.hpp"
+#include <vector>
+#include <iostream>
+#include <array>
+#include <map>
+#include <cmath>
+#include <time.h>
+
 #include "motor.hpp"
 
-#define MIN_DISTANCE_CM 20
-#define TURN_RIGHT_DELAY    5e5
-#define TURN_LEFT_DELAY     5e5
-#define BACK_DELAY          1e6
+using namespace std;
 
-void pathfinding_test(Ultrasonic ultrasonics[3], Motor motors[2]) {
-    MotorDirection direction = MotorDirection::STOP;
+#ifndef FRONT_DELAY_US
+#define FRONT_DELAY_US 0.5 * 1e6
+#endif
 
-    sleep(1);
-    motor_set_pwm_percentage(100);
-    while (1) {
-        if (ultrasonics[ULTRASONIC_FRONT].distance > MIN_DISTANCE_CM) {
-            motor_move(motors, MotorDirection::FRONT);
-            direction = MotorDirection::FRONT;
-        } else {
-            motor_move(motors, MotorDirection::STOP);
-            direction = MotorDirection::STOP;
-        }
+typedef pair<int, int> point;
 
-        if (direction == MotorDirection::STOP) {
-            printf("Frente = %dcm, Direita = %dcm, Esquerda = %dcm\n", ultrasonics[0].distance, ultrasonics[1].distance, ultrasonics[2].distance);
-            if (ultrasonics[ULTRASONIC_RIGHT].distance > MIN_DISTANCE_CM) {
-                motor_move(motors, MotorDirection::RIGHT);
-                usleep(TURN_RIGHT_DELAY);
-                motor_move(motors, MotorDirection::STOP);
-            } else if (ultrasonics[ULTRASONIC_LEFT].distance > MIN_DISTANCE_CM) {
-                motor_move(motors, MotorDirection::LEFT);
-                usleep(TURN_LEFT_DELAY);
-                motor_move(motors, MotorDirection::STOP);
-            } else {
-                motor_move(motors, MotorDirection::BACK);
-                usleep(BACK_DELAY);
-                motor_move(motors, MotorDirection::STOP);
+const char UNKNOWN = 0;
+const char FREE = 1;
+const char WALL = 2;
 
-                while (ultrasonics[ULTRASONIC_RIGHT].distance < MIN_DISTANCE_CM) {
-                    motor_move(motors, MotorDirection::LEFT);
-                    usleep(TURN_LEFT_DELAY);
-                    motor_move(motors, MotorDirection::STOP);
-                }
-            }
-        }
+array<point, 4> get_adjs(point p)
+{
+    return {point{p.first, p.second + 1}, {p.first, p.second - 1}, {p.first + 1, p.second}, {p.first - 1, p.second}};
+}
 
-        usleep(5e4);
+int dist(point a, point b)
+{
+    return sqrt(pow(a.first - b.first, 2) + pow(a.second - b.second, 2));
+}
+
+point add(point a, point b)
+{
+    return point{a.first + b.first, a.second + b.second};
+}
+
+ostream &operator<<(ostream &outs, const point &p)
+{
+    return outs << "(" << p.first << "," << p.second << ")";
+}
+
+class PathFinder
+{
+    vector<point> to_search;
+    map<point, char> world;
+    point current_position = {0, 0};
+    MotorDirection current_direction = MotorDirection::FRONT;
+
+public:
+    bool has_next()
+    {
+        return !to_search.empty();
+    }
+
+    void insert(point p, bool wall)
+    {
+        world.insert(make_pair(p, wall));
+    }
+
+    bool find();
+    point move_to(point target);
+};
+
+MotorDirection get_direction(point current, point target)
+{
+    if (target.first < current.first)
+        return MotorDirection::FRONT;
+    if (target.first > current.first)
+        return MotorDirection::BACK;
+    if (target.second < current.second)
+        return MotorDirection::LEFT;
+    if (target.second > current.second)
+        return MotorDirection::RIGHT;
+    return MotorDirection::STOP;
+}
+
+char get_adj_sensor(point current, point adj)
+{
+    MotorDirection direction = get_direction(current, adj);
+    switch (direction)
+    {
+    case MotorDirection::FRONT:
+    case MotorDirection::LEFT:
+    case MotorDirection::RIGHT:
+    default:
+        return UNKNOWN;
     }
 }
 
+bool PathFinder::find()
+{
+    insert(current_position, false);
 
+    to_search.push_back(current_position);
+    world.insert(make_pair(current_position, FREE));
 
+    while (!to_search.empty())
+    {
+        point target = to_search.back();
+        to_search.pop_back();
+        char sensor = world.at(target);
 
+        if (sensor != FREE)
+        {
+            continue;
+        }
 
+        int distance = dist(current_position, target);
 
+        if (distance > 1)
+        {
+            current_position = move_to(target);
+            // current_position = navigate_to(world, current_position, target_position)
+        }
+        else
+            current_position = move_to(target);
 
+        array<point, 4> adjs = get_adjs(current_position);
 
+        for (point adj : adjs)
+        {
+            if (world.count(adj) && world.at(adj) == WALL)
+            {
+                continue;
+            }
+            char sensor = get_adj_sensor(current_position, adj);
+            if (sensor == UNKNOWN)
+                continue;
+            world.insert(make_pair(adj, sensor));
+        }
+    }
+    return false;
+}
 
+MotorDirection get_relative_direction(MotorDirection current, MotorDirection target) {
+    if (current == target)
+        return MotorDirection::STOP;
 
+    switch (current)
+    {
+    case MotorDirection::FRONT:
+        if (target == MotorDirection::BACK || target == MotorDirection::RIGHT)
+            return MotorDirection::RIGHT;
+        return MotorDirection::LEFT;
+    case MotorDirection::RIGHT:
+        if (target == MotorDirection::LEFT || target == MotorDirection::BACK)
+                return MotorDirection::RIGHT;
+            return MotorDirection::LEFT;
+    case MotorDirection::BACK:
+        if (target == MotorDirection::LEFT || target == MotorDirection::FRONT)
+            return MotorDirection::LEFT;
+        return MotorDirection::RIGHT;
+    case MotorDirection::LEFT:
+        if (target == MotorDirection::RIGHT || target == MotorDirection::FRONT)
+            return MotorDirection::RIGHT;
+        return MotorDirection::LEFT;
+    }
+    return MotorDirection::STOP;
+}
 
+bool check_frontal_collision()
+{
+    return true;
+}
 
+bool try_move(MotorDirection current, MotorDirection target, MotorDirection target_relative)
+{
+    bool moved = motor_rotate(current, target, target_relative);
 
+    if (current == target)
+        return moved;
 
+    long int start = micros();
+    long int end = micros();
 
-#endif
+    motor_move(MotorDirection::FRONT);
+
+    while (end - start < FRONT_DELAY_US && check_frontal_collision())
+        end = micros();
+    end = micros();
+
+    motor_move(MotorDirection::STOP);
+    return true;
+}
+
+point PathFinder::move_to(point target)
+{
+    MotorDirection target_direction = get_direction(current_position,  target);
+    MotorDirection target_relative_direction = get_relative_direction(current_direction, target_direction);
+
+    bool moved = try_move(current_direction, target_direction, target_relative_direction);
+
+    if (moved) {
+        current_direction = target_direction;
+    }
+    if (target_direction == MotorDirection::STOP || !moved)
+        return current_position;
+
+    current_direction = target_direction;
+    return target;
+}
+
+#endif // __PATH_H_INCLUDED__

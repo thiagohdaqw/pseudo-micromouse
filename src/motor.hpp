@@ -1,5 +1,5 @@
-#ifndef __MOTOR_H_INCLUDED__
-#define __MOTOR_H_INCLUDED__
+#ifndef __MOTOR_IMPLEMANTATION__
+#define __MOTOR_IMPLEMANTATION__
 
 #define PWM_MIN 35
 #define PWM_MAX_VALUE 1024
@@ -7,6 +7,13 @@
 #ifndef ROTATE_DELAY_US
 #define ROTATE_DELAY_US 0.3 * 1e6
 #endif
+
+#include <wiringPi.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <cstring>
+#include <unistd.h>
+
 
 enum MotorDirection {
     STOP,
@@ -23,36 +30,17 @@ typedef struct motor {
     int pwm_inc;
 } Motor;
 
-void motor_setup(Motor[2] motor);
-void motor_cleanup(Motor motor);
-void motor_set_pwm_percentage(int percentage);
-void motor_move(MotorDirection direction);
-
-void motor_test(Motor motors[2], float delay_secs);
-
-#endif  // __MOTOR_H_INCLUDED__
-
-#ifndef __MOTOR_IMPLEMANTATION__
-#define __MOTOR_IMPLEMANTATION__
-
-#include <wiringPi.h>
-#include <unistd.h>
-#include <stdio.h>
-
-#include <unistd.h>
-
 static int pwm_percentage = 45;
 static float delay_secs = 1;
 
-static Motor[2] motors;
+extern Motor motors[2];
 
-void motor_setup(Motor[2] mtrs) {
+void motor_init() {
     for (int i = 0; i < 2; i++) {
-        pinMode(mtrs[i].pin, PWM_OUTPUT);
-        pinMode(mtrs[i].pin_in_a, OUTPUT);
-        pinMode(mtrs[i].pin_in_b, OUTPUT);
+        pinMode(motors[i].pin, PWM_OUTPUT);
+        pinMode(motors[i].pin_in_a, OUTPUT);
+        pinMode(motors[i].pin_in_b, OUTPUT);
     }
-    motors = mtrs;
 }
 
 void motor_cleanup(Motor motor) {
@@ -104,14 +92,15 @@ void motor_move(MotorDirection direction) {
     }
 }
 
-void motor_rotate(MotorDirection direction, MotorDirection target) {
+bool motor_rotate(MotorDirection direction, MotorDirection target, MotorDirection target_relative) {
     while (direction != target)
     {
-        motor_move(MotorDirection::RIGHT);
+        motor_move(target_relative);
         usleep(ROTATE_DELAY_US);
-        direction = (direction + 1) % 4 + 1;
+        direction = (MotorDirection)(((int)direction + 1) % 4 + (target_relative == MotorDirection::RIGHT ? 1 : -1));
     }
     motor_move(MotorDirection::STOP);
+    return true;
 }
 
 void motor_test(Motor motors[2], float delay_secs) {
