@@ -60,6 +60,9 @@ int main(int argc, char **argv) {
         ultrasonic_test(ultrasonics);
     } else if (strcmp(argv[1], "cam") == 0) {
         TCamArgs cam_args = {0};
+        point current(1,1);
+
+        cam_args.current = &current;
 
         cam_init(&cam_args);
 

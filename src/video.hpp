@@ -18,15 +18,12 @@ void video_make_from_images(char *output_path){
     char command[1024] = {0};
 
     snprintf(command, 1024, 
-        "ffmpeg -y -framerate 1 -i ../assets/imagesPath/image%%d.png -c:v libx264 -r 30 %s",
+        "ffmpeg -y -framerate 1 -i captures/frame_%%d.png -c:v libx264 -r 30 %s",
         output_path
     );
 
     printf("Gerando o video com as imagens %s\n", command);
-
     system(command);
-
-    // system("rm assets/imagesPath/*");
 }
 
 void video_send_telegram(char *chat_id, char *token, char *video_path) {
@@ -41,7 +38,6 @@ void video_send_telegram(char *chat_id, char *token, char *video_path) {
     );
 
     printf("Enviando request %s\n", request);
-
     system(request);
 }
 
