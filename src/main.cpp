@@ -58,6 +58,10 @@ int main(int argc, char **argv) {
     } else if (strcmp(argv[1], "sonic") == 0) {
         ultrasonic_test(ultrasonics);
     } else if (strcmp(argv[1], "find") == 0) {
+        printf("Starting search...\n");
+
+        motor_set_pwm_percentage(75);
+        sleep(1);
         PathFinder finder;
         finder.find();
     }
