@@ -13,6 +13,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "types.hpp"
+#include "video.hpp"
 
 using namespace cv;
 using namespace dnn;
@@ -26,6 +27,7 @@ using namespace dnn;
 typedef struct cam_args {
     point *current;
     point goal;
+    bool found;
     std::mutex capture;
     pthread_t tid;
 } TCamArgs;
@@ -101,6 +103,7 @@ void *cam_watch(void *args) {
         if (found) {
             printf("CAM_WATCH: PESSOA ENCONTRADA\n");
             cam_args->goal = current_position;
+            cam_args->found = true;
             break;
         }
 

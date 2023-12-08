@@ -13,6 +13,7 @@
 #include "types.hpp"
 #include "motor.hpp"
 #include "ultrasonic.hpp"
+#include "goal.hpp"
 
 using namespace std;
 
@@ -56,7 +57,7 @@ class PathFinder {
 
     void insert(point p, bool wall) { world.insert(make_pair(p, wall)); }
 
-    void find();
+    void find(TCamArgs *cam);
     point move_to(point target);
     point navigate_to(point target);
     queue<point> get_path(point target);
@@ -239,12 +240,12 @@ void PathFinder::bfs(point target, map<point, point> *visiteds) {
     }
 }
 
-void PathFinder::find() {
+void PathFinder::find(TCamArgs *cam) {
 
     to_search.push_back(current_position);
     world.insert(make_pair(current_position, FREE));
 
-    while (!to_search.empty()) {
+    while (!to_search.empty() && !cam->found) {
         point target = to_search.back();
         to_search.pop_back();
         char sensor = world.at(target);
@@ -260,6 +261,8 @@ void PathFinder::find() {
             current_position = navigate_to(target);
         } else
             current_position = move_to(target);
+
+        cam->capture.unlock();
 
         array<point, 4> adjs = get_adjs(current_position);
         for (point adj : adjs) {

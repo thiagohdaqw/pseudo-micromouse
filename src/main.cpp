@@ -74,11 +74,20 @@ int main(int argc, char **argv) {
         TCamArgs cam_args = {0};
 
         cam_args.current = &finder.current_position;
+
         cam_init(&cam_args);
 
         motor_set_pwm_percentage(95);
 
-        finder.find();
+        finder.find(&cam_args);
+
+        if (cam_args.found && argc == 5) {
+            char *chat_id = argv[2];
+            char *token = argv[3];
+            char *video_path = argv[4];
+            video_make_from_images(video_path);
+            video_send_telegram(chat_id, token, video_path);
+        }
     }
 
     gpio_cleanup(0);
