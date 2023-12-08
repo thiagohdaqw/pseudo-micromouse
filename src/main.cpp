@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
         cam_args.current = &finder.current_position;
         cam_init(&cam_args);
 
-        motor_set_pwm_percentage(75);
+        motor_set_pwm_percentage(95);
 
         finder.find();
     }

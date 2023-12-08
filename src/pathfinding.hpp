@@ -8,6 +8,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <queue>
 
 #include "types.hpp"
 #include "motor.hpp"
@@ -19,7 +20,7 @@ using namespace std;
 #define FRONT_DELAY_US 1 * 1e6
 #endif
 #define FREE_WAY 30
-#define FIND_DELAY 0.5 * 1e6
+#define FIND_DELAY 1 * 1e6
 
 const char UNKNOWN = 0;
 const char FREE = 1;
@@ -32,7 +33,7 @@ array<point, 4> get_adjs(point p) {
             {p.first - 1, p.second}};
 }
 
-int dist(point a, point b) {
+double dist(point a, point b) {
     return sqrt(pow(a.first - b.first, 2) + pow(a.second - b.second, 2));
 }
 
@@ -57,6 +58,9 @@ class PathFinder {
 
     void find();
     point move_to(point target);
+    point navigate_to(point target);
+    queue<point> get_path(point target);
+    void bfs(point target, map<point, point> *visiteds);
 };
 
 MotorDirection get_direction(point current, point target) {
@@ -135,7 +139,7 @@ bool try_move(MotorDirection current, MotorDirection target,
     bool moved = motor_rotate(current, target, target_relative);
 
     long int start = micros();
-    long int end = micros();
+    long int end = start;
 
     motor_move(MotorDirection::FRONT);
 
@@ -158,15 +162,81 @@ point PathFinder::move_to(point target) {
     bool moved = try_move(current_direction, target_direction,
                           target_relative_direction);
 
-    if (moved) {
-        current_direction = target_direction;
-    } else {
+    current_direction = target_direction;
+
+    if (!moved) {
         insert(target, WALL);
         return current_position;
     }
-
-    current_direction = target_direction;
     return target;
+}
+
+point PathFinder::navigate_to(point target) {
+    queue<point> path = get_path(target);
+
+    cout << "Navegando: " << current_position << " " << target << "\n";
+
+    while(!path.empty()) {
+        point next = path.front();
+        path.pop();
+
+        cout << "    " << next << "\n";
+
+        if (next == current_position)
+            continue;
+        
+
+        current_position = move_to(next);
+
+        if (current_position == target)
+            return target;
+    }
+
+    return current_position;
+}
+
+queue<point> PathFinder::get_path(point target) {
+    map<point, point> visiteds;
+    visiteds.insert(make_pair(current_position, current_position));
+
+    bfs(target, &visiteds);
+
+    queue<point> path;
+
+    path.push(target);
+    point next = visiteds.at(target);
+
+    while (1)
+    {
+        path.push(next);
+        next = visiteds.at(next);
+        if (next == current_position)
+            break;
+    }
+    return path;
+}
+
+void PathFinder::bfs(point target, map<point, point> *visiteds) {
+    queue<point> queue;
+
+    queue.push(current_position);
+
+    while (!queue.empty()) {
+        point position = queue.front();
+        queue.pop();
+
+        array<point, 4> adjs = get_adjs(position);
+        for (point adj : adjs) {
+            if (visiteds->count(adj) || !world.count(adj)) {
+                continue;
+            }
+            visiteds->insert(make_pair(adj, position));
+            if (adj.first == target.first && adj.second == target.second)
+                return;
+            if (world.at(adj) == FREE)
+                queue.push(adj);
+        }
+    }
 }
 
 void PathFinder::find() {
@@ -183,14 +253,11 @@ void PathFinder::find() {
             continue;
         }
 
-        int distance = dist(current_position, target);
+        double distance = dist(current_position, target);
         cout << "c=" << current_position << "cd=" << current_direction << " t=" << target << " s=" << (int)sensor << " d=" << distance << " ts=" << to_search.size() << "\n";
 
         if (distance > 1) {
-            continue;
-            // current_position = move_to(target);
-            // current_position = navigate_to(world, current_position,
-            // target_position)
+            current_position = navigate_to(target);
         } else
             current_position = move_to(target);
 
@@ -209,14 +276,9 @@ void PathFinder::find() {
 
             world.insert(make_pair(adj, sensor));
 
-            if (sensor == FREE) {
-                cout << "        QUEUE\n";
-                to_search.push_back(adj);
-            }
+            to_search.push_back(adj);
         }
         cout << " -- " << to_search.size() << "\n";
-
-        usleep(FIND_DELAY);
     }
 }
 
