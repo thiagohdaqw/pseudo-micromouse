@@ -26,10 +26,10 @@ enum UltrasonicDirection {
 
 #define TRIGGER_LOW_DELAY 4
 #define TRIGGER_HIGH_DELAY 10
-#define PING_TIMEOUT 6000
 #define ROUNDTRIP_M 5800.0f
 #define ROUNDTRIP_CM 58
 #define ULTRASONIC_WATCH_DELAY 1e5  // 0.3s
+#define MAX_DISTANCE_CM 100
 
 static pthread_t watch_tid;
 
@@ -44,16 +44,19 @@ unsigned int ultrasonic_measure_raw(Ultrasonic ultrasonic) {
     // Previous ping isn't ended
     digitalRead(ultrasonic.echo);
 
+    long int timeout = MAX_DISTANCE_CM * ROUNDTRIP_CM;
     // Wait for echo
     long int start = micros();
-    while (!digitalRead(ultrasonic.echo)) {
+    long int end = micros();
+    while (!digitalRead(ultrasonic.echo) && (end - start) <= timeout) {
+        end = micros();
     }
 
     // got echo, measuring
     long int echo_start = micros();
     long int time = echo_start;
-    while (digitalRead(ultrasonic.echo))
-        ;
+    while (digitalRead(ultrasonic.echo) && (time - start) <= timeout)
+        time = micros();
     time = micros();
 
     return time - echo_start;

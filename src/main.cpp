@@ -8,6 +8,7 @@
 
 #include <cerrno>
 
+#include "goal.hpp"
 #include "motor.hpp"
 #include "pathfinding.hpp"
 #include "ultrasonic.hpp"
@@ -57,12 +58,23 @@ int main(int argc, char **argv) {
         video_send_telegram(argv[2], argv[3], argv[4]);
     } else if (strcmp(argv[1], "sonic") == 0) {
         ultrasonic_test(ultrasonics);
+    } else if (strcmp(argv[1], "cam") == 0) {
+        TCamArgs cam_args = {0};
+
+        cam_init(&cam_args);
+
+        cam_test(&cam_args);
     } else if (strcmp(argv[1], "find") == 0) {
         printf("Starting search...\n");
 
-        motor_set_pwm_percentage(75);
-        sleep(1);
         PathFinder finder;
+        TCamArgs cam_args = {0};
+
+        cam_args.current = &finder.current_position;
+        cam_init(&cam_args);
+
+        motor_set_pwm_percentage(75);
+
         finder.find();
     }
 

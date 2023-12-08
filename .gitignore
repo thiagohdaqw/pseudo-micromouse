@@ -33,3 +33,6 @@
 
 main
 *.mp4
+
+
+capture/*.png

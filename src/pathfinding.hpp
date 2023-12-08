@@ -3,13 +3,13 @@
 
 #include <stdio.h>
 #include <time.h>
-
 #include <array>
 #include <cmath>
 #include <iostream>
 #include <map>
 #include <vector>
 
+#include "types.hpp"
 #include "motor.hpp"
 #include "ultrasonic.hpp"
 
@@ -18,10 +18,8 @@ using namespace std;
 #ifndef FRONT_DELAY_US
 #define FRONT_DELAY_US 1 * 1e6
 #endif
-
 #define FREE_WAY 30
-
-typedef pair<int, int> point;
+#define FIND_DELAY 0.5 * 1e6
 
 const char UNKNOWN = 0;
 const char FREE = 1;
@@ -49,10 +47,10 @@ ostream &operator<<(ostream &outs, const point &p) {
 class PathFinder {
     vector<point> to_search;
     map<point, char> world;
-    point current_position = {0, 0};
     MotorDirection current_direction = MotorDirection::FRONT;
 
    public:
+    point current_position = {0, 0};
     bool has_next() { return !to_search.empty(); }
 
     void insert(point p, bool wall) { world.insert(make_pair(p, wall)); }
@@ -218,7 +216,7 @@ void PathFinder::find() {
         }
         cout << " -- " << to_search.size() << "\n";
 
-        usleep(0.5 * 1e6);
+        usleep(FIND_DELAY);
     }
 }
 
