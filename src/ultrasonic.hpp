@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <wiringPi.h>
+
 #include <cstring>
 
 typedef struct ultrasonic {
@@ -28,7 +29,7 @@ enum UltrasonicDirection {
 #define TRIGGER_HIGH_DELAY 10
 #define ROUNDTRIP_M 5800.0f
 #define ROUNDTRIP_CM 58
-#define ULTRASONIC_WATCH_DELAY 1e5  // 0.3s
+#define ULTRASONIC_WATCH_DELAY 1e5
 #define MAX_DISTANCE_CM 100
 
 static pthread_t watch_tid;

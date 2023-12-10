@@ -3,17 +3,18 @@
 
 #include <stdio.h>
 #include <time.h>
+
 #include <array>
 #include <cmath>
 #include <iostream>
 #include <map>
-#include <vector>
 #include <queue>
+#include <vector>
 
-#include "types.hpp"
-#include "motor.hpp"
-#include "ultrasonic.hpp"
 #include "goal.hpp"
+#include "motor.hpp"
+#include "types.hpp"
+#include "ultrasonic.hpp"
 
 using namespace std;
 
@@ -75,18 +76,21 @@ MotorDirection get_direction(point current, point target) {
 char get_sensor(MotorDirection direction) {
     switch (direction) {
         case MotorDirection::FRONT:
-            cout << "    FRENTE " << ultrasonic_distance_cm(UltrasonicDirection::UFRONT);
+            cout << "    FRENTE "
+                 << ultrasonic_distance_cm(UltrasonicDirection::UFRONT);
             return ultrasonic_distance_cm(UltrasonicDirection::UFRONT) >
                            FREE_WAY
                        ? FREE
                        : WALL;
         case MotorDirection::LEFT:
-            cout << "    ESQUERDA " << ultrasonic_distance_cm(UltrasonicDirection::ULEFT);
+            cout << "    ESQUERDA "
+                 << ultrasonic_distance_cm(UltrasonicDirection::ULEFT);
             return ultrasonic_distance_cm(UltrasonicDirection::ULEFT) > FREE_WAY
                        ? FREE
                        : WALL;
         case MotorDirection::RIGHT:
-            cout << "    DIREITA " << ultrasonic_distance_cm(UltrasonicDirection::URIGHT);
+            cout << "    DIREITA "
+                 << ultrasonic_distance_cm(UltrasonicDirection::URIGHT);
             return ultrasonic_distance_cm(UltrasonicDirection::URIGHT) >
                            FREE_WAY
                        ? FREE
@@ -98,7 +102,7 @@ char get_sensor(MotorDirection direction) {
 }
 
 MotorDirection get_relative_rotate_direction(MotorDirection current,
-                                      MotorDirection target) {
+                                             MotorDirection target) {
     switch (current) {
         case MotorDirection::FRONT:
             if (target == MotorDirection::BACK ||
@@ -126,7 +130,7 @@ MotorDirection get_relative_rotate_direction(MotorDirection current,
 
 MotorDirection get_relative_direction(MotorDirection current,
                                       MotorDirection target) {
-    if(current == target) return MotorDirection::FRONT;
+    if (current == target) return MotorDirection::FRONT;
     return (MotorDirection)((target - current) % 4);
 }
 
@@ -144,6 +148,7 @@ bool try_move(MotorDirection current, MotorDirection target,
 
     motor_move(MotorDirection::FRONT);
 
+    // TODO: add rollback
     while ((end - start < FRONT_DELAY_US) && !check_frontal_collision()) {
         end = micros();
     }
@@ -155,10 +160,10 @@ bool try_move(MotorDirection current, MotorDirection target,
 
 point PathFinder::move_to(point target) {
     MotorDirection target_direction = get_direction(current_position, target);
-    MotorDirection target_relative_direction = get_relative_rotate_direction(current_direction, target_direction);
+    MotorDirection target_relative_direction =
+        get_relative_rotate_direction(current_direction, target_direction);
 
-    if (current_position == target)
-        return target;
+    if (current_position == target) return target;
 
     bool moved = try_move(current_direction, target_direction,
                           target_relative_direction);
@@ -177,20 +182,17 @@ point PathFinder::navigate_to(point target) {
 
     cout << "Navegando: " << current_position << " " << target << "\n";
 
-    while(!path.empty()) {
+    while (!path.empty()) {
         point next = path.front();
         path.pop();
 
         cout << "    " << next << "\n";
 
-        if (next == current_position)
-            continue;
-        
+        if (next == current_position) continue;
 
         current_position = move_to(next);
 
-        if (current_position == target)
-            return target;
+        if (current_position == target) return target;
     }
 
     return current_position;
@@ -207,12 +209,10 @@ queue<point> PathFinder::get_path(point target) {
     path.push(target);
     point next = visiteds.at(target);
 
-    while (1)
-    {
+    while (1) {
         path.push(next);
         next = visiteds.at(next);
-        if (next == current_position)
-            break;
+        if (next == current_position) break;
     }
     return path;
 }
@@ -234,14 +234,12 @@ void PathFinder::bfs(point target, map<point, point> *visiteds) {
             visiteds->insert(make_pair(adj, position));
             if (adj.first == target.first && adj.second == target.second)
                 return;
-            if (world.at(adj) == FREE)
-                queue.push(adj);
+            if (world.at(adj) == FREE) queue.push(adj);
         }
     }
 }
 
 void PathFinder::find(TCamArgs *cam) {
-
     to_search.push_back(current_position);
     world.insert(make_pair(current_position, FREE));
 
@@ -255,7 +253,9 @@ void PathFinder::find(TCamArgs *cam) {
         }
 
         double distance = dist(current_position, target);
-        cout << "c=" << current_position << "cd=" << current_direction << " t=" << target << " s=" << (int)sensor << " d=" << distance << " ts=" << to_search.size() << "\n";
+        cout << "c=" << current_position << "cd=" << current_direction
+             << " t=" << target << " s=" << (int)sensor << " d=" << distance
+             << " ts=" << to_search.size() << "\n";
 
         if (distance > 1) {
             current_position = navigate_to(target);
@@ -270,9 +270,10 @@ void PathFinder::find(TCamArgs *cam) {
                 continue;
             }
             MotorDirection adj_direction = get_direction(current_position, adj);
-            MotorDirection relative_direction = get_relative_direction(current_direction, adj_direction);
+            MotorDirection relative_direction =
+                get_relative_direction(current_direction, adj_direction);
             char sensor = get_sensor(relative_direction);
-            
+
             if (sensor == UNKNOWN) continue;
 
             cout << (int)sensor << " " << adj << "\n";

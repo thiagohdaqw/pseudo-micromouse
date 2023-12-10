@@ -13,14 +13,14 @@ void video_make_from_images(char *output_path);
 #include <stdlib.h>
 #include <string.h>
 
-
-void video_make_from_images(char *output_path){
+void video_make_from_images(char *output_path) {
     char command[1024] = {0};
 
-    snprintf(command, 1024, 
-        "ffmpeg -y -framerate 1 -i captures/frame_%%d.png -c:v libx264 -r 30 %s",
-        output_path
-    );
+    // TODO: Gerar um video com o menor caminho até a pessoa
+    snprintf(command, 1024,
+             "ffmpeg -y -framerate 1 -i captures/frame_%%d.png -c:v libx264 -r "
+             "30 %s",
+             output_path);
 
     printf("Gerando o video com as imagens %s\n", command);
     system(command);
@@ -31,11 +31,10 @@ void video_send_telegram(char *chat_id, char *token, char *video_path) {
 
     printf("Enviando mensagem\n");
 
-    snprintf(request, 1024, "curl -X POST -F 'video=@%s' 'https://api.telegram.org/bot%s/sendVideo?chat_id=%s'",
-        video_path,
-        token,
-        chat_id
-    );
+    snprintf(request, 1024,
+             "curl -X POST -F 'video=@%s' "
+             "'https://api.telegram.org/bot%s/sendVideo?chat_id=%s'",
+             video_path, token, chat_id);
 
     printf("Enviando request %s\n", request);
     system(request);

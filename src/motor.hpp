@@ -95,14 +95,14 @@ void motor_move(MotorDirection direction) {
 
 bool motor_rotate(MotorDirection direction, MotorDirection target, MotorDirection target_relative) {
     int step = target_relative == MotorDirection::RIGHT ? 1 : -1;
-    printf("%d %d %d %d\n", direction, target, step, (direction + target) % 4);
+
     while (direction != target)
     {
         motor_move(target_relative);
         usleep(ROTATE_DELAY_US);
+        // FIXME: por alguma magia o 'd' está ficando negativo em alguns casos :O
         int d = ((int)direction + step) % 4;
         direction = (MotorDirection)(d < 0 ? 4 + d : d);
-        printf("%d %d %d %d\n", direction, target, step, d);
     }
     motor_stop();
     return true;

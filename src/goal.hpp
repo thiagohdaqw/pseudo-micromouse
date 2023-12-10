@@ -74,7 +74,8 @@ void *cam_watch(void *args) {
     Mat frame;
 
     VideoCapture camera(0);
-
+    // TODO: Limpar o buffer da webcam pra pegar o ultimo frame.
+    //      Atualmente está com um delay de alguns segundos
     camera.set(CAP_PROP_FRAME_WIDTH, IMG_WIDTH);
     camera.set(CAP_PROP_FRAME_HEIGHT, IMG_HEIGHT);
     camera.set(CAP_PROP_POS_FRAMES, 1);
@@ -90,6 +91,7 @@ void *cam_watch(void *args) {
         printf("CAM_WATCH: CAPTURAR\n");
         char readed = false;
 
+        // TODO: Tratar a leitura da webcam de uma melhor forma
         for (int i = 0; i < CAM_BUFFER_READ; i++)
             readed = camera.read(frame);
 
